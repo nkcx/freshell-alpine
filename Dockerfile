@@ -54,6 +54,11 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 USER coder
 WORKDIR /home/coder
 
+# Configure npm global prefix in user home (avoids EACCES on /usr/local)
+RUN mkdir -p /home/coder/.npm-global \
+    && npm config set prefix /home/coder/.npm-global
+ENV NPM_CONFIG_PREFIX=/home/coder/.npm-global
+
 # --- Code providers ---
 
 # Claude Code (native binary installer)
@@ -78,7 +83,7 @@ RUN git config --global init.defaultBranch main \
     && git config --global pull.rebase false
 
 # Ensure all tool binaries are discoverable
-ENV PATH="/home/coder/.local/bin:/home/coder/.npm-global/bin:${PATH}"
+ENV PATH="/home/coder/.npm-global/bin:/home/coder/.local/bin:${PATH}"
 
 # --- Freshell configuration (overridable at runtime) ---
 ENV PORT=3001
