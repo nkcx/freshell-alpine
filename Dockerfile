@@ -11,9 +11,11 @@ RUN if [ -n "${FRESHELL_VERSION}" ]; then \
       git clone --branch "${FRESHELL_VERSION}" --depth 1 \
         https://github.com/danshapiro/freshell.git .; \
     else \
-      LATEST_TAG=$(git ls-remote --tags \
+      LATEST_TAG=v$(git ls-remote --tags \
         https://github.com/danshapiro/freshell.git 'refs/tags/v*' \
         | sed 's|.*refs/tags/||' \
+        | grep -v '\^{}' \
+        | sed 's/^v//' \
         | sort -t. -k1,1n -k2,2n -k3,3n \
         | tail -n1); \
       echo "Detected latest freshell release: ${LATEST_TAG}"; \
