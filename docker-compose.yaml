@@ -1,0 +1,35 @@
+version: "3.9"
+services:
+  freshell:
+    image: ghcr.io/nkcx/freshell-container:latest
+    container_name: freshell
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      - TZ=America/Los_Angeles
+      # --- Freshell ---
+      # Auth token for the web UI (generate with: openssl rand -hex 32)
+      - AUTH_TOKEN=${AUTH_TOKEN}
+      # Listen port (default: 3001)
+      - PORT=3001
+      # Comma-separated allowed CORS origins (auto-detected from LAN if unset)
+      #- ALLOWED_ORIGINS=https://freshell.example.com
+      # --- Code provider command overrides (optional) ---
+      #- CLAUDE_CMD=claude
+      #- CODEX_CMD=codex
+      #- OPENCODE_CMD=opencode
+      #- GEMINI_CMD=gemini
+      #- KIMI_CMD=kimi
+      # --- Provider API keys (optional, can also be set interactively) ---
+      #- ANTHROPIC_API_KEY=
+      #- OPENAI_API_KEY=
+      #- GOOGLE_GENERATIVE_AI_API_KEY=
+    volumes:
+      # Persistent home: credentials, state, SSH keys, repos, history
+      - freshell-home:/home/coder
+      # Optional: mount an extensions volume
+      #- freshell-extensions:/extensions:ro
+    ports:
+      - "3001:3001"
+volumes:
+  freshell-home:
