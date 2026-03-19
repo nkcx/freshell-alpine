@@ -1,6 +1,6 @@
-# freshell-alpine
+# freshell-container
 
-Alpine-based Docker container packaging [Freshell](https://github.com/danshapiro/freshell)
+Debian slim-based Docker container packaging [Freshell](https://github.com/danshapiro/freshell)
 with all supported coding CLI providers and common development tools. Designed as a
 persistent, browser-accessible, multi-device development environment.
 
