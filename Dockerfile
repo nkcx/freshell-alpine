@@ -48,6 +48,8 @@ RUN grep coder /etc/passwd | grep -q /bin/bash \
 
 # Copy freshell from build stage
 COPY --from=build /opt/freshell /opt/freshell
+# Rebuild native modules (node-pty) against runtime environment
+RUN cd /opt/freshell && npm rebuild node-pty
 RUN chown -R coder:coder /opt/freshell
 
 # Install entrypoint script
