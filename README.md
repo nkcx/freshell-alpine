@@ -14,13 +14,21 @@ Based on `node:22-bookworm-slim` (Debian). Alpine was evaluated but `node-pty`
   session persistence, mobile-responsive UI
 
 **Code providers:**
-- [Claude Code](https://code.claude.com) (Anthropic) — native installer
+- [Claude Code](https://code.claude.com) (Anthropic) — npm (`@anthropic-ai/claude-code`)*
 - [Codex CLI](https://github.com/openai/codex) (OpenAI) — npm
-- [OpenCode](https://opencode.ai) (SST) — native installer
+- [OpenCode](https://opencode.ai) (SST) — npm
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli) (Google) — npm
-- [Kimi CLI](https://github.com/MoonshotAI/kimi-cli) (Moonshot AI) — native installer
+- [Kimi CLI](https://github.com/MoonshotAI/kimi-cli) (Moonshot AI) — uv (Python 3.13)
 
-**Dev tools:** git, ssh, tmux, ripgrep, jq, curl, bash
+\* Anthropic recommends the native installer over npm for Claude Code. However, the
+native installer writes to `~/.local/bin` which conflicts with the persistent
+`/home/coder` volume mount, and its auto-updater creates additional conflicts at
+runtime. The npm package installs to `/usr/local/bin` and is updated via container
+image rebuilds, making it the better fit for Docker environments.
+
+**Shells:** bash (default), zsh, fish, dash — configurable via `FRESHELL_SHELL` env var
+
+**Dev tools:** git, ssh, tmux, ripgrep, jq, curl
 
 ## Quick start
 
@@ -46,6 +54,7 @@ See [`docker-compose.yaml`](docker-compose.yaml) for a production-ready compose 
 | `AUTH_TOKEN` | Yes | (auto-generated) | Freshell authentication token (min 16 chars) |
 | `PORT` | No | `3001` | Freshell listen port |
 | `TZ` | No | UTC | Container timezone |
+| `FRESHELL_SHELL` | No | `/bin/bash` | Shell for terminal sessions (`/bin/zsh`, `/bin/fish`, `/bin/dash`) |
 | `ALLOWED_ORIGINS` | No | (auto-detect LAN) | Comma-separated CORS origins |
 | `SKIP_UPDATE_CHECK` | No | `true` | Disable freshell git-based auto-update |
 | `CLAUDE_CMD` | No | `claude` | Claude Code binary override |
@@ -70,8 +79,9 @@ The `/home/coder` volume persists across container recreations:
 
 ## Extensions
 
-Freshell supports extensions in `~/.freshell/extensions/`. Since this path lives inside
-the persistent home volume, extensions installed at runtime survive container updates.
+Freshell supports extensions in `~/.freshell/extensions/`. This directory is
+automatically created on first run. Since it lives inside the persistent home
+volume, extensions installed at runtime survive container updates.
 
 To inject extensions from an external volume at startup, mount a read-only volume at
 `/extensions`. The entrypoint copies any files found there into `~/.freshell/extensions/`
@@ -119,6 +129,27 @@ button on GitHub.
 
 The `FRESHELL_VERSION` build arg is intentionally unset by default so that
 each build auto-detects the latest tagged release from upstream.
+
+## Image size
+
+The image is larger than typical containers (~4GB) due to bundling five code
+providers, each with their own dependency trees. The main contributors:
+
+- npm global packages (Codex, Gemini, OpenCode, Claude Code): ~1.2GB
+- Freshell + node_modules: ~600MB
+- Kimi CLI + Python 3.13 environment: ~200MB
+- build-essential (required for node-pty): ~200MB
+
+`build-essential` is retained in the runtime image because freshell's `npm run serve`
+triggers a build step that may recompile native modules. If freshell ships prebuilt
+binaries or skips recompilation in a future release, this can be removed.
+
+## Known issues
+
+- **OpenCode, Gemini, and Kimi** are detected by freshell's API but may not appear
+  in the new-tab dropdown menu in v0.6.0. They can be launched from any shell tab.
+- **Claude Code auto-update** is disabled by using the npm package instead of the
+  native installer. Updates come via container image rebuilds.
 
 ## License
 
