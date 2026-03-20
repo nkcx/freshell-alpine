@@ -8,6 +8,18 @@ EXTENSIONS_IMPORT="/extensions"
 EXTENSIONS_TARGET="${HOME_DIR}/.freshell/extensions"
 FRESHELL_CONFIG="${HOME_DIR}/.freshell/config.json"
 
+# --- Shell configuration ---
+# FRESHELL_SHELL env var lets users choose their preferred shell.
+# Validates that the shell exists before applying.
+if [ -n "${FRESHELL_SHELL}" ]; then
+    if [ -x "${FRESHELL_SHELL}" ]; then
+        export SHELL="${FRESHELL_SHELL}"
+        echo "[${LOG_PREFIX}] Shell set to ${FRESHELL_SHELL}"
+    else
+        echo "[${LOG_PREFIX}] WARNING: ${FRESHELL_SHELL} not found or not executable, keeping default (${SHELL})"
+    fi
+fi
+
 # --- First-run initialization ---
 # When the /home/coder volume is empty (first deploy), seed it with
 # the defaults baked into the image. On subsequent starts, the volume
@@ -26,6 +38,10 @@ chmod 700 "${HOME_DIR}/.ssh"
 # Ensure projects directory exists as a convention
 mkdir -p "${HOME_DIR}/projects"
 
+# Ensure freshell directories exist
+mkdir -p "${HOME_DIR}/.freshell"
+mkdir -p "${EXTENSIONS_TARGET}"
+
 # --- Pre-seed freshell config for remote access ---
 # Freshell binds to 127.0.0.1 until the setup wizard sets
 # network.host to 0.0.0.0 and network.configured to true in config.json.
@@ -33,7 +49,6 @@ mkdir -p "${HOME_DIR}/projects"
 
 if [ ! -f "${FRESHELL_CONFIG}" ]; then
     echo "[${LOG_PREFIX}] Creating freshell config with remote access enabled..."
-    mkdir -p "${HOME_DIR}/.freshell"
     cat > "${FRESHELL_CONFIG}" <<'CONFIGEOF'
 {
   "version": 1,
@@ -122,7 +137,6 @@ fi
 
 if [ -d "${EXTENSIONS_IMPORT}" ] && [ "$(ls -A ${EXTENSIONS_IMPORT} 2>/dev/null)" ]; then
     echo "[${LOG_PREFIX}] Importing extensions from ${EXTENSIONS_IMPORT}..."
-    mkdir -p "${EXTENSIONS_TARGET}"
     cp -rn "${EXTENSIONS_IMPORT}/"* "${EXTENSIONS_TARGET}/" 2>/dev/null || true
 fi
 
